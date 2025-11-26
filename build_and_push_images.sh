@@ -20,14 +20,14 @@ if ! docker info | grep -q "mirrors.tencent.com"; then
     echo "   docker login mirrors.tencent.com"
 fi
 
-pred_json="$(realpath ~/workspace/pred_gold_full.json)"
+pred_json="$(realpath ~/workspace/pred_gold_1.json)"
 
 # Run build-only mode
 python -m swebench.harness.run_evaluation \
     -d SWE-bench/SWE-bench_Multilingual \
     -p "${pred_json}" \
     --max_workers 8 \
-    --clean \
+    --clean=True \
     -id build_images_$(date +%Y%m%d_%H%M%S) \
     --build_only true
 
