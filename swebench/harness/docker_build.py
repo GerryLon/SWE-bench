@@ -73,6 +73,58 @@ def close_logger(logger):
         logger.removeHandler(handler)
 
 
+def push_image(image_name: str, client: docker.DockerClient, logger=None):
+    """
+    Pushes a docker image to the registry if it contains a registry domain.
+    
+    Args:
+        image_name (str): Name of the image to push
+        client (docker.DockerClient): Docker client to use for pushing the image
+        logger: Logger to use for logging (optional, will print to stdout if not provided)
+    
+    Returns:
+        bool: True if push was successful or skipped, False if push failed
+    """
+    registry_domains = ["mirrors.tencent.com", "docker.io", "gcr.io", "quay.io"]
+    should_push = any(domain in image_name for domain in registry_domains)
+    
+    if not should_push:
+        return True
+    
+    log_func = logger.info if logger else print
+    error_func = logger.error if logger else print
+    warning_func = logger.warning if logger else print
+    
+    log_func(f"Pushing image {image_name} to registry...")
+    print(f"Pushing image {image_name} to registry...")
+    try:
+        push_response = client.api.push(
+            image_name,
+            stream=True,
+            decode=True
+        )
+        for chunk in push_response:
+            if "status" in chunk:
+                status = chunk["status"]
+                if "id" in chunk:
+                    log_func(f"[{chunk['id']}] {status}")
+                else:
+                    log_func(status)
+            elif "error" in chunk:
+                error_func(f"Push error: {chunk['error']}")
+                raise docker.errors.APIError(chunk["error"])
+        log_func(f"Image {image_name} pushed successfully!")
+        print(f"Image {image_name} pushed successfully!")
+        return True
+    except docker.errors.APIError as push_error:
+        warning_func(f"Failed to push image {image_name}: {push_error}")
+        warning_func("You may need to run 'docker login' first or check your credentials")
+        return False
+    except Exception as push_error:
+        warning_func(f"Unexpected error pushing image {image_name}: {push_error}")
+        return False
+
+
 def build_image(
     image_name: str,
     setup_scripts: dict,
@@ -95,7 +147,7 @@ def build_image(
         nocache (bool): Whether to use the cache when building
     """
     # Create a logger for the build process
-    logger = setup_logger(image_name, build_dir / "build_image.log")
+    logger = setup_logger(image_name, build_dir / "build_image.log", add_stdout=True)
     logger.info(
         f"Building image {image_name}\n"
         f"Using dockerfile:\n{dockerfile}\n"
@@ -149,6 +201,9 @@ def build_image(
                     chunk["errorDetail"]["message"], buildlog
                 )
         logger.info("Image built successfully!")
+        
+        # Auto-push image if it contains a registry domain
+        push_image(image_name, client, logger)
     except docker.errors.BuildError as e:
         logger.error(f"docker.errors.BuildError during {image_name}: {e}")
         raise BuildImageError(image_name, str(e), logger) from e
@@ -196,6 +251,8 @@ def build_base_images(
                 remove_image(client, image_name, "quiet")
             else:
                 print(f"Base image {image_name} already exists, skipping build.")
+                # Push the existing image to registry
+                push_image(image_name, client)
                 continue
         except docker.errors.ImageNotFound:
             pass
@@ -462,6 +519,8 @@ def build_instance_image(
         )
     else:
         logger.info(f"Image {image_name} already exists, skipping build.")
+        # Push the existing image to registry
+        push_image(image_name, client, logger)
 
     if new_logger:
         close_logger(logger)

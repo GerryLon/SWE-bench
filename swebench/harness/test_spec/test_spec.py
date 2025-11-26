@@ -81,10 +81,14 @@ class TestSpec:
             val = hash_value[
                 :10
             ]  # 10 characters is still likely to be unique given only a few base images will be created
-            return f"sweb.base.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}.{val}:{self.base_image_tag}"
-        return (
-            f"sweb.base.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}:{self.base_image_tag}"
-        )
+            key = f"sweb.base.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}.{val}:{self.base_image_tag}"
+        else:
+            key = f"sweb.base.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}:{self.base_image_tag}"
+        
+        # Add namespace prefix if it's for local build (contains registry domain)
+        if self.namespace and not self.is_remote_image:
+            key = f"{self.namespace}/{key}"
+        return key
 
     @property
     def env_image_key(self):
@@ -101,18 +105,33 @@ class TestSpec:
         hash_object.update(hash_key.encode("utf-8"))
         hash_value = hash_object.hexdigest()
         val = hash_value[:22]  # 22 characters is still very likely to be unique
-        return f"sweb.env.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}.{val}:{self.env_image_tag}"
+        key = f"sweb.env.{MAP_REPO_TO_EXT[self.repo]}.{self.arch}.{val}:{self.env_image_tag}"
+        
+        # Add namespace prefix if it's for local build (contains registry domain)
+        if self.namespace and not self.is_remote_image:
+            key = f"{self.namespace}/{key}"
+        return key
 
     @property
     def instance_image_key(self):
         key = f"sweb.eval.{self.arch}.{self.instance_id.lower()}:{self.instance_image_tag}"
-        if self.is_remote_image:
+        # Add namespace prefix if it's for local build (contains registry domain)
+        if self.namespace and not self.is_remote_image:
             key = f"{self.namespace}/{key}".replace("__", "_1776_")
         return key
 
     @property
     def is_remote_image(self):
-        return self.namespace is not None
+        # If namespace contains a registry domain (like mirrors.tencent.com), 
+        # it's for local build and push, not for pulling from remote
+        if self.namespace is None:
+            return False
+        # Check if namespace contains common registry domains
+        local_build_registries = ["mirrors.tencent.com", "localhost", "127.0.0.1"]
+        for registry in local_build_registries:
+            if registry in self.namespace:
+                return False
+        return True
 
     def get_instance_container_name(self, run_id=None):
         if not run_id:
