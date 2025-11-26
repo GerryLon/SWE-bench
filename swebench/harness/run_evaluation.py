@@ -445,7 +445,7 @@ def build_instance_images(
         try:
             # Set up logger
             log_dir.mkdir(parents=True, exist_ok=True)
-            logger = setup_logger(instance_id, log_file)
+            logger = setup_logger(instance_id, log_file, add_stdout=True)
             
             # Build the instance image (without creating container)
             if force_rebuild:

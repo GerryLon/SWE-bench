@@ -203,7 +203,9 @@ def build_image(
         logger.info("Image built successfully!")
         
         # Auto-push image if it contains a registry domain
+        logger.info(f"Pushing image to registry... {image_name}")
         push_image(image_name, client, logger)
+        logger.info(f"Image pushed successfully! {image_name}")
     except docker.errors.BuildError as e:
         logger.error(f"docker.errors.BuildError during {image_name}: {e}")
         raise BuildImageError(image_name, str(e), logger) from e

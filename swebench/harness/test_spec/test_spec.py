@@ -117,7 +117,7 @@ class TestSpec:
         key = f"sweb.eval.{self.arch}.{self.instance_id.lower()}:{self.instance_image_tag}"
         # Add namespace prefix if it's for local build (contains registry domain)
         if self.namespace and not self.is_remote_image:
-            key = f"{self.namespace}/{key}".replace("__", "_1776_")
+            key = f"{self.namespace}/{key}"
         return key
 
     @property
