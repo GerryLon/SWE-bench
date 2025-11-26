@@ -23,7 +23,8 @@ fi
 # Run build-only mode
 python -m swebench.harness.run_evaluation \
     -d SWE-bench/SWE-bench_Multilingual \
-    -p ~/workspace/pred_gold_1.json \
+    -p ~/workspace/pred_gold_full.json \
+    --max_workers 8 \
     -id build_images_$(date +%Y%m%d_%H%M%S) \
     --build_only true
 
