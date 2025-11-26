@@ -20,7 +20,7 @@ if ! docker info | grep -q "mirrors.tencent.com"; then
     echo "   docker login mirrors.tencent.com"
 fi
 
-pred_json="$(realpath ~/workspace/pred_gold_1.json)"
+pred_json="$(realpath ./pred_gold_1.json)"
 
 # Run build-only mode
 python -m swebench.harness.run_evaluation \
