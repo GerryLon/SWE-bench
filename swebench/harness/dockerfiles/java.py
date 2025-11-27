@@ -29,15 +29,13 @@ _DOCKERFILE_INSTANCE_JAVA = r"""FROM --platform={platform} {env_image_name}
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-# Install Python 3.11.8 if not already installed
-RUN apt update && apt install -y software-properties-common gnupg ca-certificates && \
-    echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/deadsnakes-ppa.list && \
-    gpg --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 && \
-    gpg --export F23C5A6CF475977595C89F51BA6932366A755776 | tee /etc/apt/trusted.gpg.d/deadsnakes.gpg > /dev/null && \
+# Install Python 3.11 from Debian repositories
+RUN echo "deb https://mirrors.cloud.tencent.com/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
     apt update && \
-    apt install -y python3.11 python3.11-venv python3.11-dev python3-pip && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+    apt install -y python3 python3-pip python3-venv python3-dev && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     rm -rf /var/lib/apt/lists/* && \
     python3 --version
 

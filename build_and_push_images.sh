@@ -29,7 +29,7 @@ python -m swebench.harness.run_evaluation \
     --max_workers 14 \
     --clean=True \
     -id build_images_$(date +%Y%m%d_%H%M%S) \
-    --build_only true
+    --build_only true "$@"
 
 echo ""
 echo "=========================================="
