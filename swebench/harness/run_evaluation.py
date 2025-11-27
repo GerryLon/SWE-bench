@@ -663,7 +663,7 @@ def main(
     if platform.system() == "Linux":
         resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
     # Create Docker client with increased timeout for push operations
-    client = docker.from_env(timeout=600)  # 10 minutes timeout
+    client = docker.from_env(timeout=1800)  # 10 minutes timeout
 
     existing_images = list_images(client)
     if not dataset:
