@@ -26,6 +26,9 @@ RUN adduser --disabled-password --gecos 'dog' nonroot
 
 _DOCKERFILE_INSTANCE_JAVA = r"""FROM --platform={platform} {env_image_name}
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
 # Install Python 3.11.8 if not already installed
 RUN apt update && apt install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
