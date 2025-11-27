@@ -392,7 +392,8 @@ def build_instance_images(
         instance_image_tag (str): Tag for instance images
         env_image_tag (str): Tag for environment images
     """
-    client = docker.from_env()
+    # Create Docker client with increased timeout for push operations
+    client = docker.from_env(timeout=1800)  # 10 minutes timeout
     test_specs = list(
         map(
             lambda instance: make_test_spec(
@@ -661,7 +662,8 @@ def main(
     # run instances locally
     if platform.system() == "Linux":
         resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
-    client = docker.from_env()
+    # Create Docker client with increased timeout for push operations
+    client = docker.from_env(timeout=600)  # 10 minutes timeout
 
     existing_images = list_images(client)
     if not dataset:
