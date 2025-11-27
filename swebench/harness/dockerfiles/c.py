@@ -17,6 +17,14 @@ RUN adduser --disabled-password --gecos 'dog' nonroot
 
 _DOCKERFILE_INSTANCE_C = r"""FROM --platform={platform} {env_image_name}
 
+# Configure Tencent Cloud mirror for faster downloads
+RUN echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
+    apt update && \
+    apt install -y libffi-dev pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY ./setup_repo.sh /root/
 RUN /bin/bash /root/setup_repo.sh
 

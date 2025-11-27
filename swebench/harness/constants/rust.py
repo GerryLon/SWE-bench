@@ -176,12 +176,12 @@ TOKIO_SPECS = {
         "test_cmd": ["cargo test --test time_delay_queue --no-fail-fast"],
     },
     "4867": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["cargo test --test sync_broadcast --no-fail-fast --no-run"],
         "test_cmd": ["cargo test --test sync_broadcast --no-fail-fast"],
     },
     "4898": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": [
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --features full --test rt_metrics --no-run'
         ],
@@ -210,7 +210,7 @@ TOKIO_SPECS = {
         ],
     },
     "7139": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": [
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --test fs_file --no-fail-fast --no-run'
         ],
@@ -285,14 +285,14 @@ NUSHELL_SPECS = {
 
 AXUM_SPECS = {
     "2096": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib --no-run"],
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib -- routing::tests::fallback"
         ],
     },
     "1934": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib --no-run"],
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib -- routing::tests::fallback"
@@ -300,35 +300,35 @@ AXUM_SPECS = {
     },
     # All tests for 1730 are PASS_TO_PASS since it tests compilation
     "1730": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib --no-run"],
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib -- routing::tests::mod state"
         ],
     },
     "1119": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib slash --no-run"
         ],
         "test_cmd": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib slash"],
     },
     "734": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib --no-run"],
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib -- routing::tests::head"
         ],
     },
     "691": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": ["RUSTFLAGS=-Awarnings cargo test --package axum --lib --no-run"],
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib -- routing::tests::nest::nesting_router_at_root --exact"
         ],
     },
     "682": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.83"},
         "install": [
             "RUSTFLAGS=-Awarnings cargo test --package axum --lib trailing --no-run"
         ],

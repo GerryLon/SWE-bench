@@ -497,6 +497,16 @@ def build_instance_images(
     print(f"Successfully built: {success_count}")
     print(f"Failed: {error_count}")
     
+    # Print failed image names
+    if error_count > 0:
+        print(f"\n{'='*80}")
+        print(f"Failed images ({error_count}):")
+        print(f"{'='*80}")
+        for payload in failed:
+            test_spec = payload[0]
+            print(f"  - {test_spec.instance_image_key} (instance: {test_spec.instance_id})")
+        print(f"{'='*80}")
+    
     return succeeded, failed
 
 
