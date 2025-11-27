@@ -60,8 +60,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
 # Install Python 3.11.8 if not already installed
-RUN apt update && apt install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
+RUN apt update && apt install -y software-properties-common gnupg && \
+    echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/deadsnakes-ppa.list && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 && \
     apt update && \
     apt install -y python3.11 python3.11-venv python3.11-dev python3-pip && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
