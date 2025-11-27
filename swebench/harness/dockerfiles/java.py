@@ -30,9 +30,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
 # Install Python 3.11.8 if not already installed
-RUN apt update && apt install -y software-properties-common gnupg && \
+RUN apt update && apt install -y software-properties-common gnupg ca-certificates && \
     echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/deadsnakes-ppa.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 && \
+    gpg --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 && \
+    gpg --export F23C5A6CF475977595C89F51BA6932366A755776 | tee /etc/apt/trusted.gpg.d/deadsnakes.gpg > /dev/null && \
     apt update && \
     apt install -y python3.11 python3.11-venv python3.11-dev python3-pip && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
