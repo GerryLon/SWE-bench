@@ -29,11 +29,8 @@ _DOCKERFILE_INSTANCE_JAVA = r"""FROM --platform={platform} {env_image_name}
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-# Install Python 3.11 from Debian repositories
-RUN echo "deb https://mirrors.cloud.tencent.com/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    apt update && \
+# Install Python (use system default Python from Ubuntu)
+RUN apt update && \
     apt install -y python3 python3-pip python3-venv python3-dev && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     rm -rf /var/lib/apt/lists/* && \
