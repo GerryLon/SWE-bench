@@ -125,6 +125,12 @@ WORKDIR /testbed/
 
 _DOCKERFILE_INSTANCE_JS = r"""FROM --platform={platform} {env_image_name}
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+# Install pip for Python
+RUN apt update && apt install -y python3-pip && rm -rf /var/lib/apt/lists/*
+
 COPY ./setup_repo.sh /root/
 RUN sed -i -e 's/\r$//' /root/setup_repo.sh
 RUN node -v
