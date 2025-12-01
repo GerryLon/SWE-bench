@@ -204,7 +204,7 @@ TOKIO_SPECS = {
         ],
     },
     "4384": {
-        "docker_specs": {"rust_version": "1.81"},
+        "docker_specs": {"rust_version": "1.82"},
         "test_cmd": [
             "RUSTFLAGS=-Awarnings cargo test --package tokio --test net_types_unwind --features full --no-fail-fast"
         ],
