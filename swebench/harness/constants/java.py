@@ -131,6 +131,43 @@ fi
     ]
 
 
+def make_lucene_pre_install_script_11760() -> List[str]:
+    """
+    Special pre-install script for case 11760.
+    This includes the standard lucene setup plus a fix for the clone() method bug.
+    """
+    # Start with the standard lucene pre-install steps
+    base_steps = make_lucene_pre_install_script()
+    
+    # Add the fix for the clone() method bug
+    fix_clone_step = r"""
+cat > /tmp/fix_clone.diff << 'EOF'
+diff --git a/gradle/java/modules.gradle b/gradle/java/modules.gradle
+index f9ebac3d345..1a810dc755f 100644
+--- a/gradle/java/modules.gradle
++++ b/gradle/java/modules.gradle
+@@ -522,7 +522,11 @@ class ModularPathsExtension implements Cloneable, Iterable<Object> {
+   }
+ 
+   public ModularPathsExtension clone() {
+-    return (ModularPathsExtension) super.clone()
++    def cloned = new ModularPathsExtension(project, sourceSet)
++    cloned.mode = this.mode
++    cloned.debugPaths = this.debugPaths
++    cloned.modulePatches = new ArrayList<>(this.modulePatches)
++    return cloned
+   }
+ 
+   ModularPathsExtension cloneWithMode(Mode newMode) {
+EOF
+
+git apply /tmp/fix_clone.diff || echo 'Failed to apply patch, continuing...'
+""".strip()
+    
+    # Combine base steps with the fix
+    return base_steps + [fix_clone_step]
+
+
 def make_rxjava_pre_install_script() -> List[str]:
     """
     This script modifies the gradle config to print all test results, including
@@ -511,7 +548,7 @@ SPECS_LUCENE = {
     },
     "11760": {
         "docker_specs": {"java_version": "17"},
-        "pre_install": make_lucene_pre_install_script(),
+        "pre_install": make_lucene_pre_install_script_11760(),
         "test_cmd": [
             "./gradlew test --tests org.apache.lucene.queries.intervals.TestIntervalBuilder"
         ],
