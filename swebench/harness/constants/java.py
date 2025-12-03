@@ -83,7 +83,51 @@ sed -i '
 ' {gradle_file} << 'EOF'
 {new_content}
 EOF
-""".strip()
+""".strip(),
+        # Generate a script to setup Java proxy settings
+        r"""
+cat > setup_java_proxy.sh << 'EOF'
+#!/bin/bash
+
+PROXY_OPTS=""
+
+# Extract HTTPS proxy settings
+if [ -n "$https_proxy" ]; then
+    PROXY_HOST=$(echo "$https_proxy" | sed -e 's|^[^/]*//||' -e 's|:.*$||')
+    PROXY_PORT=$(echo "$https_proxy" | sed -e 's|^.*:||' -e 's|/.*$||')
+    PROXY_OPTS="$PROXY_OPTS -Dhttps.proxyHost=$PROXY_HOST -Dhttps.proxyPort=$PROXY_PORT"
+fi
+
+# Extract HTTP proxy settings
+if [ -n "$http_proxy" ]; then
+    PROXY_HOST=$(echo "$http_proxy" | sed -e 's|^[^/]*//||' -e 's|:.*$||')
+    PROXY_PORT=$(echo "$http_proxy" | sed -e 's|^.*:||' -e 's|/.*$||')
+    PROXY_OPTS="$PROXY_OPTS -Dhttp.proxyHost=$PROXY_HOST -Dhttp.proxyPort=$PROXY_PORT"
+fi
+
+if [ -n "$PROXY_OPTS" ]; then
+    echo -n "${PROXY_OPTS}"
+fi
+
+EOF
+""".strip(),
+        # Add proxy settings to the beginning of gradlew file
+        r"""
+GRADLEW_FILE="gradlew"
+if [ -f "$GRADLEW_FILE" ]; then
+    # Insert proxy setup code after the shebang line
+    sed -i '2i\
+# Load and export proxy settings\
+if [ -f "setup_java_proxy.sh" ]; then\
+    PROXY_OPTS=$(bash setup_java_proxy.sh)\
+    if [ -n "$PROXY_OPTS" ]; then\
+        export JAVA_OPTS="${JAVA_OPTS}${PROXY_OPTS}"\
+        echo "Applied proxy settings: ${PROXY_OPTS}"\
+    fi\
+fi\
+' "$GRADLEW_FILE"
+fi
+""".strip(),
     ]
 
 
