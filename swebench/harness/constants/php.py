@@ -76,10 +76,16 @@ SPECS_LARAVEL_FRAMEWORK = {
     "53914": {
         "docker_specs": {"php_version": "8.3.16"},
         "install": [
+            # Fix testbench-core version: image has v10.8 but Laravel 11.35.1 needs v9.7
             "composer require orchestra/testbench-core --no-update",
             "composer install",
+            "rm -f composer.lock && rm -rf vendor && ",
+            "COMPOSER_ROOT_VERSION=11.35.1 composer require 'orchestra/testbench-core:^9.7'",
         ],
         "test_cmd": [
+            # DatabaseConnectionsTest doesn't need DatabaseMigrations, change to extend TestCase directly
+            "sed -i 's/extends DatabaseTestCase/extends \\\\Orchestra\\\\Testbench\\\\TestCase/' "
+            "tests/Integration/Database/DatabaseConnectionsTest.php && "
             "vendor/bin/phpunit --testdox --colors=never tests/Integration/Database/DatabaseConnectionsTest.php"
         ],
     },

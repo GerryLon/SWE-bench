@@ -24,12 +24,53 @@ from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
 
 # MARK: Utility functions
+def fuzzy_match_test_name(expected_name: str, status_map: dict[str, str]) -> str | None:
+    """
+    Try to find a matching test name in the status map using fuzzy matching.
+    This handles cases where test names are truncated (e.g., "test name…" or "test name...").
+    
+    Args:
+        expected_name: The expected test name to match
+        status_map: Dictionary mapping test names to their status
+    
+    Returns:
+        The matched test name from status_map, or None if no match found
+    """
+    # First try exact match
+    if expected_name in status_map:
+        return expected_name
+    
+    # Try fuzzy matching for truncated names
+    # Check if any key in status_map is a prefix of expected_name (truncated in log)
+    for log_name in status_map.keys():
+        # Remove trailing ellipsis characters from log name
+        normalized_log_name = log_name.rstrip('…').rstrip('.')
+        
+        # Check if the log name (without ellipsis) matches the start of expected name
+        if expected_name.startswith(normalized_log_name) and len(normalized_log_name) > 10:
+            # Require at least 10 chars to avoid false positives
+            return log_name
+    
+    # Check if expected_name is a prefix of any key in status_map (truncated in test spec)
+    for log_name in status_map.keys():
+        if log_name.startswith(expected_name) and len(expected_name) > 10:
+            return log_name
+    
+    return None
+
+
 def test_passed(case: str, sm: dict[str, str]) -> bool:
-    return case in sm and sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
+    matched_name = fuzzy_match_test_name(case, sm)
+    if matched_name is None:
+        return False
+    return sm[matched_name] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
 
 
 def test_failed(case: str, sm: dict[str, str]) -> bool:
-    return case not in sm or sm[case] in [
+    matched_name = fuzzy_match_test_name(case, sm)
+    if matched_name is None:
+        return True  # Not found = failed
+    return sm[matched_name] in [
         TestStatus.FAILED.value,
         TestStatus.ERROR.value,
     ]

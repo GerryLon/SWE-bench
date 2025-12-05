@@ -186,6 +186,8 @@ TOKIO_SPECS = {
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --features full --test rt_metrics --no-run'
         ],
         "test_cmd": [
+            # Replace google.com with qq.com to avoid network issues in container environment
+            'sed -i "s/google.com:80/qq.com:80/g" tokio/tests/rt_metrics.rs && '
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --features full --test rt_metrics'
         ],
     },
@@ -200,6 +202,8 @@ TOKIO_SPECS = {
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --features full --test rt_metrics --no-fail-fast --no-run'
         ],
         "test_cmd": [
+            # Replace google.com with qq.com to avoid network issues in container environment
+            'sed -i "s/google.com:80/qq.com:80/g" tokio/tests/rt_metrics.rs && '
             'RUSTFLAGS="--cfg tokio_unstable" cargo test --features full --test rt_metrics --no-fail-fast'
         ],
     },
