@@ -245,37 +245,55 @@ for v in ["1.0", "1.1", "1.2"]:
 JEST_JSON_JQ_TRANSFORM = """jq -r '.testResults[].assertionResults[] | "[" + (.status | ascii_upcase) + "] " + ((.ancestorTitles | join(" > ")) + (if .ancestorTitles | length > 0 then " > " else "" end) + .title)'"""
 
 SPECS_BABEL = {
+    # Note: Babel build uses yarn gulp build-rollup (for parser) or yarn gulp build-no-bundle (for others)
+    # instead of make build to avoid OOM during evaluation. The full make build is done in install phase.
     "14532": {
         "docker_specs": {"node_version": "20", "_variant": "js_2"},
         "test_cmd": ["yarn jest babel-generator --verbose"],
-        "install": ["make bootstrap"],
-        "build": ["make build"],
+        "install": [
+            "echo 'npmRegistryServer: \"https://mirrors.tencent.com/npm/\"' >> .yarnrc.yml",
+            "make bootstrap",
+            "make build"
+        ],
+        "build": ["yarn gulp build-no-bundle"],  # lightweight rebuild for evaluation
     },
     "13928": {
         "docker_specs": {"node_version": "20", "_variant": "js_2"},
         "test_cmd": ['yarn jest babel-parser -t "arrow" --verbose'],
-        "install": ["make bootstrap"],
-        "build": ["make build"],
+        "install": [
+            "echo 'npmRegistryServer: \"https://mirrors.tencent.com/npm/\"' >> .yarnrc.yml",
+            "make bootstrap",
+            "make build"
+        ],
+        "build": ["yarn gulp build-rollup"],  # lightweight rebuild for parser
     },
     "15649": {
         "docker_specs": {"node_version": "20", "_variant": "js_2"},
         "test_cmd": ["yarn jest packages/babel-traverse/test/scope.js --verbose"],
-        "install": ["make bootstrap"],
-        "build": ["make build"],
+        "install": [
+            "echo 'npmRegistryServer: \"https://mirrors.tencent.com/npm/\"' >> .yarnrc.yml",
+            "make bootstrap",
+            "make build"
+        ],
+        "build": ["yarn gulp build-no-bundle"],  # lightweight rebuild for evaluation
     },
     "15445": {
         "docker_specs": {"node_version": "20", "_variant": "js_2"},
         "test_cmd": [
             'yarn jest packages/babel-generator/test/index.js -t "generation " --verbose'
         ],
-        "install": ["make bootstrap"],
-        "build": ["make build"],
+        "install": [
+            "echo 'npmRegistryServer: \"https://mirrors.tencent.com/npm/\"' >> .yarnrc.yml",
+            "make bootstrap",
+            "make build"
+        ],
+        "build": ["yarn gulp build-no-bundle"],  # lightweight rebuild for evaluation
     },
     "16130": {
         "docker_specs": {"node_version": "20", "_variant": "js_2"},
         "test_cmd": ["yarn jest babel-helpers --verbose"],
-        "install": ["make bootstrap"],
-        "build": ["make build"],
+        "install": ["make bootstrap", "make build"],
+        "build": ["yarn gulp build-no-bundle"],  # lightweight rebuild for evaluation
     },
 }
 
