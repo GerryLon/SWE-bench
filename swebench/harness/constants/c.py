@@ -83,12 +83,26 @@ SPECS_JQ = {
             "2235",
             "2658",
             "2750",
-            "2681",
             "2919",
             "2598",
             "2728",
         ]
-    }
+    },
+    # 2681 needs to avoid building before patch is applied (otherwise auto-generated files are modified)
+    # Build step only does configure, actual make happens in test_cmd after patch is applied
+    "2681": {
+        "build": [
+            "git submodule update --init",
+            "autoreconf -fi",
+            "./configure --with-oniguruma=builtin",
+        ],
+        "test_cmd": [
+            "make clean",
+            "touch src/parser.y src/lexer.l",
+            "make -j$(nproc)",
+            "make check",
+        ],
+    },
 }
 
 SPECS_JSON = {
