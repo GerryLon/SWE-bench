@@ -229,21 +229,124 @@ def parse_log_jest_json(log: str, test_spec: TestSpec) -> dict[str, str]:
 def parse_log_vitest(log: str, test_spec: TestSpec) -> dict[str, str]:
     """
     Parser for test logs generated with vitest. Assumes --reporter=verbose flag.
+    
+    Supports two log formats:
+    1. Flat format (wide terminal): "✓ file.spec.ts > suite > test name"
+    2. Hierarchical format (narrow terminal) with indentation-based nesting:
+       " ✓ file.spec.ts (N)"
+       "   ✓ suite1 (N)"
+       "     ✓ suite2 (N)"
+       "       ✓ test name"
+    
+    Also supports fuzzy matching for truncated test names (e.g., "test name…").
     """
     test_status_map = {}
-
-    pattern = r"^\s*(✓|×|↓)\s(.+?)(?:\s(\d+\s*m?s?|\[skipped\]))?$"
-
-    for line in log.split("\n"):
-        match = re.match(pattern, line.strip())
+    
+    # Pattern to match test result lines with indentation
+    # Captures: (indent)(status_symbol)(test_name)(optional duration/skipped)
+    pattern = r"^(\s*)(✓|×|↓)\s(.+?)(?:\s(\d+\s*m?s?|\[skipped\]))?$"
+    
+    lines = log.split("\n")
+    
+    # Phase 1: Pre-scan to identify which lines are suites (have child lines with deeper indent)
+    # A line is a suite if the next non-empty test line has deeper indentation
+    parsed_lines = []  # [(line_idx, indent, test_name, status_symbol), ...]
+    for idx, line in enumerate(lines):
+        match = re.match(pattern, line)
         if match:
-            status_symbol, test_name, _duration_or_skipped = match.groups()
-            if status_symbol == "✓":
-                test_status_map[test_name] = TestStatus.PASSED.value
-            elif status_symbol == "×":
-                test_status_map[test_name] = TestStatus.FAILED.value
-            elif status_symbol == "↓":
-                test_status_map[test_name] = TestStatus.SKIPPED.value
+            indent_str, status_symbol, test_name, _ = match.groups()
+            indent = len(indent_str)
+            # Strip trailing whitespace from test name
+            test_name = test_name.strip()
+            parsed_lines.append((idx, indent, test_name, status_symbol))
+    
+    # Identify suites: lines that have a following line with deeper indent
+    suite_line_indices = set()
+    for i, (idx, indent, test_name, _) in enumerate(parsed_lines):
+        # Check if next line has deeper indent
+        if i + 1 < len(parsed_lines):
+            next_indent = parsed_lines[i + 1][1]
+            if next_indent > indent:
+                suite_line_indices.add(idx)
+    
+    # Phase 2: Parse with knowledge of which lines are suites
+    suite_stack = []  # [(name, indent), ...]
+    
+    for idx, indent, test_name, status_symbol in parsed_lines:
+        # Determine status
+        if status_symbol == "✓":
+            status = TestStatus.PASSED.value
+        elif status_symbol == "×":
+            status = TestStatus.FAILED.value
+        elif status_symbol == "↓":
+            status = TestStatus.SKIPPED.value
+        else:
+            continue
+        
+        # Check if this is a flat format line (contains " > ")
+        if " > " in test_name:
+            # Flat format: full path already present
+            test_status_map[test_name] = status
+            continue
+        
+        # Hierarchical format: need to build full path using indentation
+        # Determine if this is a suite based on pre-scan
+        is_suite = idx in suite_line_indices
+        
+        # Also check for file lines which are always suites
+        is_file_line = re.search(r'\.(spec|test)\.(ts|js|tsx|jsx)\s*\(\d+\)?$', test_name)
+        if is_file_line:
+            is_suite = True
+        
+        # Clean name: remove count suffix for suites
+        if is_suite:
+            clean_name = re.sub(r'\s*\(\d+\)$', '', test_name).strip()
+        else:
+            clean_name = test_name
+        
+        # Pop suite stack until we find parent with smaller indent
+        while suite_stack and suite_stack[-1][1] >= indent:
+            suite_stack.pop()
+        
+        if is_suite:
+            # This is a suite - push to stack
+            suite_stack.append((clean_name, indent))
+            continue  # Skip suite lines, don't record as test
+        else:
+            # This is an actual test case
+            # Build full name from stack + test name
+            parts = [s[0] for s in suite_stack] + [test_name]
+            final_name = " > ".join(parts)
+            
+            # Handle truncated names (ends with ellipsis)
+            is_truncated = final_name.endswith('…') or final_name.endswith('...')
+            normalized_name = final_name.rstrip('…').rstrip('.')
+            
+            if is_truncated:
+                # For truncated names, try to find a matching full name in existing map
+                matched = False
+                for existing_name in list(test_status_map.keys()):
+                    if existing_name.startswith(normalized_name):
+                        test_status_map[existing_name] = status
+                        matched = True
+                        break
+                
+                if not matched:
+                    # Store with normalized name for later fuzzy matching
+                    test_status_map[normalized_name] = status
+            else:
+                # Full name - check if we have a truncated version already
+                matched = False
+                for existing_name in list(test_status_map.keys()):
+                    if final_name.startswith(existing_name) and len(existing_name) < len(final_name):
+                        del test_status_map[existing_name]
+                        test_status_map[final_name] = status
+                        matched = True
+                        break
+                
+                if not matched:
+                    test_status_map[final_name] = status
+    
     return test_status_map
 
 
@@ -311,7 +414,11 @@ def parse_log_tap(log: str, test_spec: TestSpec) -> dict[str, str]:
     pattern = r"^(ok|not ok) (\d+) (.+)$"
 
     for line in log.split("\n"):
-        match = re.match(pattern, line.strip())
+        # Remove Mocha spinner characters (Braille pattern Unicode U+2800-U+28FF)
+        # These appear at the start of the first test line
+        cleaned_line = re.sub(r'^[\u2800-\u28FF]+', '', line.strip())
+        
+        match = re.match(pattern, cleaned_line)
         if match:
             status, _test_number, test_name = match.groups()
             if status == "ok":

@@ -83,12 +83,26 @@ SPECS_JQ = {
             "2235",
             "2658",
             "2750",
-            "2681",
             "2919",
             "2598",
             "2728",
         ]
-    }
+    },
+    # 2681 needs to avoid building before patch is applied (otherwise auto-generated files are modified)
+    # Build step only does configure, actual make happens in test_cmd after patch is applied
+    "2681": {
+        "build": [
+            "git submodule update --init",
+            "autoreconf -fi",
+            "./configure --with-oniguruma=builtin",
+        ],
+        "test_cmd": [
+            "make clean",
+            "touch src/parser.y src/lexer.l",
+            "make -j$(nproc)",
+            "make check",
+        ],
+    },
 }
 
 SPECS_JSON = {
@@ -114,7 +128,7 @@ SPECS_MICROPYTHON = {
         ],
         "test_cmd": [
             "cd tests",
-            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -i string_format",
+            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -j 1 -i string_format",
         ],
     },
     "13569": {
@@ -126,7 +140,7 @@ SPECS_MICROPYTHON = {
         ],
         "test_cmd": [
             "cd tests",
-            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -i try",
+            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -j 1 -i try",
         ],
     },
     "13039": {
@@ -138,7 +152,7 @@ SPECS_MICROPYTHON = {
         ],
         "test_cmd": [
             "cd tests",
-            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -i slice",
+            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -j 1 -i slice",
         ],
     },
     "12158": {
@@ -150,7 +164,7 @@ SPECS_MICROPYTHON = {
         ],
         "test_cmd": [
             "cd tests",
-            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -d thread",
+            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -j 1 -d thread",
         ],
     },
     "10095": {
@@ -163,7 +177,7 @@ SPECS_MICROPYTHON = {
         "build": ["source ./tools/ci.sh", "ci_unix_build_helper VARIANT=standard"],
         "test_cmd": [
             "cd tests",
-            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -i basics/fun",
+            "MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-standard/micropython ./run-tests.py -j 1 -i basics/fun",
         ],
     },
 }
