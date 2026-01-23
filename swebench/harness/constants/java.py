@@ -128,6 +128,8 @@ fi\
 ' "$GRADLEW_FILE"
 fi
 """.strip(),
+        # Increase network timeout for gradle wrapper
+        "sed -i 's/networkTimeout=[0-9]\\+/networkTimeout=300000/g' /testbed/gradle/wrapper/gradle-wrapper.properties || true",
     ]
 
 
